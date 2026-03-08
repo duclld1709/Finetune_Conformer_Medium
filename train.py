@@ -109,7 +109,7 @@ def main():
 
   # Load Data
   text_transform = TEXT_TRANSFORM
-  train_cache_dir, train_split = _resolve_cache_dir('valid')
+  train_cache_dir, train_split = _resolve_cache_dir('train')
   test_cache_dir, test_split = _resolve_cache_dir('test')
 
   if train_cache_dir:
@@ -407,4 +407,5 @@ def validate(encoder, decoder, char_decoder, criterion, test_loader, text_transf
 
 
 if __name__ == '__main__':
+
   main()
