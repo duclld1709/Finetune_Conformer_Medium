@@ -94,7 +94,7 @@ class RelativeMultiHeadAttention(nn.Module):
     AC = torch.matmul((q + self.u).transpose(1, 2), k)
     BD = torch.matmul((q + self.v).transpose(1, 2), pos_emb)
     BD = self.rel_shift(BD)
-    attn = (AC + BD) / math.sqrt(self.d_model)
+    attn = (AC + BD) / math.sqrt(self.d_head)
 
     #Mask before softmax with large negative number
     if mask is not None:

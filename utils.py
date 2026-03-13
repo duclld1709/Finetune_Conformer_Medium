@@ -51,18 +51,52 @@ NUM_CLASSES = BLANK_IDX + 1
 # Audio feature transforms
 # ---------------------------------------------------------------------------
 
+global_mean =  torch.tensor([-24.2660, -18.6908, -13.7669, -14.2111,  -7.1560,  -7.6943,  -7.1851,
+         -4.2978,  -4.8221,  -4.1201,  -5.1094,  -5.2236,  -5.1167,  -4.5937,
+         -4.6483,  -5.0046,  -5.5109,  -6.1044,  -6.7666,  -7.4232,  -8.0957,
+         -8.8795,  -9.7729, -10.7417, -11.8011, -12.7625, -13.2616, -15.1400,
+        -16.0306, -15.6396, -17.6837, -17.2780, -18.2830, -18.0426, -18.7767,
+        -18.5980, -18.9698, -19.3400, -19.7190, -20.2227, -20.7465, -21.2466,
+        -21.5844, -21.8003, -21.8738, -21.7992, -21.3127, -21.4595, -21.1526,
+        -21.6093, -21.8270, -22.6595, -23.2346, -23.8137, -24.2570, -24.5193,
+        -24.7054, -24.8437, -25.3006, -25.9214, -26.5420, -27.1251, -27.7053,
+        -28.1566, -28.6208, -29.0741, -29.5604, -29.9314, -30.2777, -30.7121,
+        -31.2983, -32.1564, -32.5009, -32.7972, -32.9734, -33.4359, -34.1482,
+        -35.1747, -36.3483, -37.5019])
+global_std =  torch.tensor([14.1405, 14.1811, 13.9281, 13.9205, 14.1637, 13.2881, 13.7293, 14.0519,
+        13.8300, 13.7818, 14.4067, 14.3432, 14.0448, 14.1427, 14.3695, 14.5572,
+        14.6690, 14.7115, 14.7504, 14.7723, 14.7598, 14.6666, 14.4875, 14.2403,
+        13.9664, 13.7077, 13.4428, 13.2807, 13.1455, 12.9886, 12.9686, 12.8391,
+        12.8301, 12.8190, 12.8329, 12.8502, 12.8490, 12.7844, 12.7240, 12.6706,
+        12.6346, 12.6049, 12.5822, 12.5867, 12.6105, 12.6370, 12.6406, 12.6733,
+        12.6741, 12.6826, 12.6401, 12.5759, 12.4882, 12.4318, 12.3985, 12.3978,
+        12.4214, 12.4265, 12.3996, 12.3274, 12.2363, 12.1644, 12.0919, 11.9859,
+        11.8506, 11.7616, 11.7003, 11.7108, 11.7595, 11.7753, 11.7273, 11.6405,
+        11.5417, 11.4557, 11.3879, 11.3333, 11.2739, 11.2438, 11.1666, 11.0244])
+
+class GlobalCMVN(nn.Module):
+    def __init__(self, mean, std):
+        super().__init__()
+        self.register_buffer('mean', mean)
+        self.register_buffer('std', std)
+
+    def forward(self, x):
+        mean = self.mean.view(-1, 1)
+        std = self.std.view(-1, 1)
+        return (x - mean) / (std + 1e-5)
 
 def get_audio_transforms():
   
   #  10 time masks with p=0.05
   #  The actual conformer paper uses a variable time_mask_param based on the length of each utterance.
   #  For simplicity, we approximate it with just a fixed value.
-  time_masks = [torchaudio.transforms.TimeMasking(time_mask_param=15, p=0.05) for _ in range(10)]
-  train_audio_transform = nn.Sequential(
-    torchaudio.transforms.MelSpectrogram(sample_rate=16000, n_mels=80, hop_length=160),
-     torchaudio.transforms.AmplitudeToDB(), #80 filter banks, 25ms window size, 10ms hop
-    torchaudio.transforms.FrequencyMasking(freq_mask_param=27),
-    *time_masks,
+  time_masks = [torchaudio.transforms.TimeMasking(time_mask_param=80, p=0.05) for _ in range(3)]
+  train_audio_transform = nn.Sequential(torchaudio.transforms.MelSpectrogram(sample_rate=16000, n_mels=80, hop_length=160),
+                                        torchaudio.transforms.AmplitudeToDB(), #80 filter banks, 25ms window size, 10ms hop
+                                        GlobalCMVN(global_mean, global_std),
+                                        torchaudio.transforms.FrequencyMasking(freq_mask_param=27),
+                                        torchaudio.transforms.FrequencyMasking(27),
+                                        *time_masks,
   )
 
   valid_audio_transform = nn.Sequential(
@@ -71,7 +105,8 @@ def get_audio_transforms():
           n_mels=80,
           hop_length=160,
       ),
-      torchaudio.transforms.AmplitudeToDB())
+      torchaudio.transforms.AmplitudeToDB(),
+      GlobalCMVN(global_mean, global_std))
   
   return train_audio_transform, valid_audio_transform
 

@@ -6,3 +6,4 @@
 6. Beam_size 10 chỉ khi evaluate 5 sample predictions
 7. Noam Scheduler Checking (Done)
 8. Gradient Clipping (Done)
+9. Adjust appropriate SpecAug for get_transform method (Done)

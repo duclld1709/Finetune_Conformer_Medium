@@ -299,6 +299,9 @@ def train(encoder, decoder, char_decoder, optimizer, scheduler, criterion, grad_
     if (i + 1) % args.accumulate_iters == 0:
       # Unscale before reading grad norms so values are in true fp32 scale
       grad_scaler.unscale_(optimizer)
+
+      torch.nn.utils.clip_grad_norm_(all_params, 3.0)
+
       grad_norm = get_grad_norm(all_params)
 
       grad_scaler.step(optimizer)

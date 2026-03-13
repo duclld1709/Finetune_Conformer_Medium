@@ -1,0 +1,8 @@
+feature_cache
+feature_cache.zip
+# Python cache
+__pycache__/
+*.py[cod]
+
+# VS Code settings
+.vscode/
