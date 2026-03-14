@@ -181,7 +181,7 @@ def main():
   beam_decoder = CTCBeamSearchDecoder(blank_idx=TEXT_TRANSFORM.blank_idx, beam_size=args.beam_size).eval()
   criterion = nn.CTCLoss(blank=text_transform.blank_idx, zero_infinity=True)
   optimizer = torch.optim.AdamW(list(encoder.parameters()) + list(decoder.parameters()), lr=5e-4, betas=(.9, .98), eps=1e-05 if args.use_amp else 1e-09, weight_decay=args.weight_decay)
-  scheduler = TransformerLrScheduler(optimizer, args.d_encoder, args.warmup_steps)
+  scheduler = TransformerLrScheduler(optimizer, args.d_encoder, args.warmup_steps, multiplier=0.7)
 
   # Print model size
   model_size(encoder, 'Encoder')
